@@ -1068,6 +1068,11 @@ const runRecommendationPipeline = async ({
   }
   console.log('filtered:', filtered.length);
 
+  console.log('[recommendation][origin-consistency-check]', {
+    searchNearbyLocation: originLatLng,
+    enrichLocation: originLatLng,
+  });
+
   return rankPlaces(filtered, keywordProfile, timeProfile, slotStart, slotEnd);
 };
 
@@ -1184,6 +1189,25 @@ const fetchRecommendationsForSlot = async ({
     console.warn('[recommendation][time-profile] failed to load time preferences:', error?.message || error);
   }
 
+  if (!origin) {
+    console.warn('[recommendation][for-slot-origin-warning]', {
+      message: 'origin missing; no default/current-location fallback is used in for-slot flow',
+      fallbackUsed: false,
+    });
+  }
+
+  if (
+    origin &&
+    origin.query === undefined &&
+    (origin.lat === undefined || origin.lng === undefined)
+  ) {
+    console.warn('[recommendation][for-slot-origin-warning]', {
+      message: 'origin format invalid; expected {lat,lng} or {query}',
+      requestOrigin: origin,
+      fallbackUsed: false,
+    });
+  }
+
   const originLatLng = await resolveOrigin({
     origin,
     language,
@@ -1192,10 +1216,25 @@ const fetchRecommendationsForSlot = async ({
     transport: normalizedTransport,
   });
 
+  // Keep one immutable origin reference for all free-slot recommendation stages.
+  const slotOriginLatLng = originLatLng;
+  console.log('[recommendation][origin-debug]', {
+    requestOrigin: origin,
+    resolvedOrigin: slotOriginLatLng,
+    searchNearbyLocation: slotOriginLatLng,
+    pipelineOrigin: slotOriginLatLng,
+  });
+  console.log('[recommendation][slot-origin-check]', {
+    requestOrigin: origin,
+    resolvedOrigin: slotOriginLatLng,
+    searchNearbyLocation: slotOriginLatLng,
+    pipelineOrigin: slotOriginLatLng,
+  });
+
   let nearby;
   if (normalizedCategories.length > 0) {
     nearby = await searchPlacesService.searchNearby({
-      location: originLatLng,
+      location: slotOriginLatLng,
       radius: 3000,
       includedTypes: normalizedCategories,
       language,
@@ -1206,7 +1245,7 @@ const fetchRecommendationsForSlot = async ({
     });
   } else {
     nearby = await searchPlacesService.searchNearby({
-      location: originLatLng,
+      location: slotOriginLatLng,
       radius: 3000,
       language,
       region,
@@ -1218,7 +1257,7 @@ const fetchRecommendationsForSlot = async ({
 
   const places = await runRecommendationPipeline({
     places: nearby.results || [],
-    originLatLng,
+    originLatLng: slotOriginLatLng,
     transport: normalizedTransport,
     slotStart: startIso,
     slotEnd: endIso,
@@ -1230,7 +1269,7 @@ const fetchRecommendationsForSlot = async ({
     slotStart: startIso,
     slotEnd: endIso,
     origin,
-    resolvedOrigin: originLatLng,
+    resolvedOrigin: slotOriginLatLng,
     categories: normalizedCategories || [],
     selectedPrices: selectedPrices || [],
     transport: normalizedTransport,
@@ -1241,7 +1280,7 @@ const fetchRecommendationsForSlot = async ({
   return {
     places,
     slot: { slotStart: startIso, slotEnd: endIso },
-    origin: originLatLng,
+    origin: slotOriginLatLng,
   };
 };
 

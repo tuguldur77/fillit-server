@@ -211,7 +211,7 @@ exports.photoProxy = async (req, res, next) => {
 		const effectiveMaxHeightPx = parsedMaxHeightPx;
 
 		const result = await searchPlacesService.fetchPhotoMedia({
-			name,
+			name, 
 			maxWidthPx: effectiveMaxWidthPx,
 			maxHeightPx: effectiveMaxHeightPx,
 		});

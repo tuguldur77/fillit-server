@@ -71,6 +71,28 @@ exports.recommendForSlot = async (req, res, next) => {
     const normalizedTransport =
       transport || (Array.isArray(selectedTransports) ? selectedTransports[0] : selectedTransports);
 
+    console.log('[recommendation][for-slot-request]', {
+      requestOrigin: origin,
+      slotStart,
+      slotEnd,
+      categories,
+      transport,
+    });
+
+    if (!origin && latitude !== undefined && longitude !== undefined) {
+      console.warn('[recommendation][for-slot-origin-warning]', {
+        message: 'origin not provided; using latitude/longitude compatibility fallback from request body',
+        latitude,
+        longitude,
+      });
+    }
+
+    if (!origin && (latitude === undefined || longitude === undefined)) {
+      console.warn('[recommendation][for-slot-origin-warning]', {
+        message: 'origin missing and no fallback coordinates found; request will fail in service validation',
+      });
+    }
+
     const result = await recommendationService.fetchRecommendationsForSlot({
       uid,
       slotStart,
