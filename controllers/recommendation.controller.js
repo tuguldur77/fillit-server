@@ -47,11 +47,16 @@ exports.recommendForSlot = async (req, res, next) => {
     console.log('API HIT: recommendForSlot');
     const uid = req.user.uid;
     console.log('[recommendation][auth-uid]', req.user?.uid);
+    console.log('[demo-slot] body keys:', Object.keys(body));
+    console.log('[demo-slot] body:', JSON.stringify(body));
+
     const {
       slotStart,
       slotEnd,
       origin,
+      requestOrigin,
       categories,
+      calendarContext,
       selectedPrices,
       transport,
       selectedCategories,
@@ -63,7 +68,7 @@ exports.recommendForSlot = async (req, res, next) => {
       longitude,
     } = req.body || {};
 
-    const normalizedOrigin = origin ||
+    const normalizedOrigin = origin || requestOrigin ||
       (latitude !== undefined && longitude !== undefined
         ? { lat: Number(latitude), lng: Number(longitude) }
         : undefined);
@@ -77,6 +82,7 @@ exports.recommendForSlot = async (req, res, next) => {
       slotEnd,
       categories,
       transport,
+      hasCalendarContext: Boolean(calendarContext),
     });
 
     if (!origin && latitude !== undefined && longitude !== undefined) {
@@ -99,6 +105,7 @@ exports.recommendForSlot = async (req, res, next) => {
       slotEnd,
       origin: normalizedOrigin,
       categories: normalizedCategories,
+      calendarContext,
       selectedPrices,
       transport: normalizedTransport,
       language,
@@ -108,6 +115,104 @@ exports.recommendForSlot = async (req, res, next) => {
 
     res.status(200).json({
       message: '슬롯 기반 추천 조회 성공',
+      data: result,
+    });
+  } catch (error) {
+    next(toError(error));
+  }
+};
+
+exports.demoSlot = async (req, res, next) => {
+  try {
+    /*
+    curl -X POST http://localhost:3000/api/recommendation/demo-slot \
+      -H "Content-Type: application/json" \
+      -d '{
+        "slotStart":"2026-04-29T10:30:00+09:00",
+        "slotEnd":"2026-04-29T12:00:00+09:00",
+        "origin":{"lat":37.5665,"lng":126.9780},
+        "categories":["cafe"],
+        "transport":"walk",
+        "testPersona":"quiet"
+      }'
+    */
+    console.log('API HIT: demoSlot');
+    console.log('[demo-slot] auth bypassed for demo');
+    const body = req.body || {};
+    const {
+      slotStart,
+      slotEnd,
+      origin,
+      categories,
+      calendarContext,
+      selectedPrices,
+      transport,
+      selectedCategories,
+      selectedTransports,
+      language,
+      region,
+      maxResults,
+      latitude,
+      longitude,
+      testPersona,
+    } = body;
+
+    const uid = testPersona ? 'demo-user' : req.user?.uid || 'demo-user';
+    console.log('[recommendation][auth-uid]', uid || null);
+
+    if (testPersona && !['quiet', 'social'].includes(testPersona)) {
+      return res.status(400).json({ error: 'unsupported testPersona. Use: quiet | social' });
+    }
+
+    const normalizedOrigin = origin ||
+      (latitude !== undefined && longitude !== undefined
+        ? { lat: Number(latitude), lng: Number(longitude) }
+        : undefined);
+    const normalizedCategories = Array.isArray(categories) ? categories : selectedCategories;
+    const normalizedTransport =
+      transport || (Array.isArray(selectedTransports) ? selectedTransports[0] : selectedTransports);
+
+    console.log('[recommendation][demo-slot-request]', {
+      requestOrigin: origin,
+      slotStart,
+      slotEnd,
+      categories,
+      transport,
+      testPersona,
+      hasCalendarContext: Boolean(calendarContext),
+    });
+
+    if (!origin && latitude !== undefined && longitude !== undefined) {
+      console.warn('[recommendation][demo-slot-origin-warning]', {
+        message: 'origin not provided; using latitude/longitude compatibility fallback from request body',
+        latitude,
+        longitude,
+      });
+    }
+
+    if (!origin && (latitude === undefined || longitude === undefined)) {
+      console.warn('[recommendation][demo-slot-origin-warning]', {
+        message: 'origin missing and no fallback coordinates found; request will fail in service validation',
+      });
+    }
+
+    const result = await recommendationService.fetchRecommendationsForSlot({
+      uid,
+      slotStart,
+      slotEnd,
+      origin: normalizedOrigin,
+      categories: normalizedCategories,
+      calendarContext,
+      selectedPrices,
+      transport: normalizedTransport,
+      language,
+      region,
+      maxResults,
+      testPersona,
+    });
+
+    res.status(200).json({
+      message: '슬롯 기반 데모 추천 조회 성공',
       data: result,
     });
   } catch (error) {

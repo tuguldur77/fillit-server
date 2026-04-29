@@ -48,12 +48,14 @@ app.use(express.json());
 const authRoutes = require('./routes/auth.route'); 
 const searchPlaceRoutes = require('./routes/searchPlaces.route');
 const recommendationRoutes = require('./routes/recommendation.route');
+const adminRoutes = require('./routes/admin.route');
 const schedulesRoutes = require('./routes/schedules.route');
 const searchLogRoutes = require('./routes/searchLog.route');
 
 console.log('Auth Router Loaded:', typeof authRoutes.stack !== 'undefined');
 console.log('SearchPlace Router Loaded:', typeof searchPlaceRoutes.stack !== 'undefined');
 console.log('Recommendation Router Loaded:', typeof recommendationRoutes.stack !== 'undefined');
+console.log('Admin Router Loaded:', typeof adminRoutes.stack !== 'undefined');
 console.log('Schedules Router Loaded:', typeof schedulesRoutes.stack !== 'undefined');
 console.log('SearchLog Router Loaded:', typeof searchLogRoutes.stack !== 'undefined');
 
@@ -66,6 +68,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes); // 예: /api/auth/login
 app.use('/api/searchPlace', searchPlaceRoutes); // 장소 검색 라우터
 app.use('/api/recommendation', recommendationRoutes); // 추천 라우터
+app.use('/api/admin', adminRoutes); // 관리자 유틸 라우터
 app.use('/api/schedules', schedulesRoutes); // 일정 CRUD/조회
 app.use('/api/search', searchLogRoutes); // 검색 로그
 

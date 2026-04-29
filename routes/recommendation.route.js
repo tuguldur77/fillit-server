@@ -13,6 +13,7 @@ router.get('/', authenticateToken, (req, res) => {
 
 router.post('/', authenticateToken, recommendationController.getRecommendations);
 router.post('/for-slot', authenticateToken, recommendationController.recommendForSlot);
+router.post('/demo-slot', recommendationController.demoSlot);
 router.post('/feedback', authenticateToken, recommendationController.submitFeedback);
 
 module.exports = router;
