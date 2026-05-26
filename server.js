@@ -13,18 +13,26 @@ const admin = require('firebase-admin'); // Firebase Admin SDK
 // 4. 서버 설정
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json'; 
 
 // 5. Firebase Admin SDK 초기화 (인증 검증을 위해 필수)
 try {
-    const serviceAccount = require(SERVICE_ACCOUNT_PATH);
+    let firebaseConfig;
+
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        // Railway: use environment variable
+        firebaseConfig = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    } else {
+        // Local: use file
+        firebaseConfig = require('./serviceAccountKey.json');
+    }
+
     admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(firebaseConfig)
     });
     console.log('✅ Firebase Admin SDK 초기화 성공');
 } catch (error) {
     console.error(`❌ Firebase Admin SDK 초기화 실패: ${error.message}`);
-    console.error('=> .env 파일의 FIREBASE_SERVICE_ACCOUNT_PATH와 serviceAccountKey.json 파일을 확인하세요.');
+    console.error('=> FIREBASE_SERVICE_ACCOUNT_JSON 환경 변수 또는 serviceAccountKey.json 파일을 확인하세요.');
     process.exit(1); // 초기화 실패 시 서버 종료
 }
 
