@@ -269,12 +269,14 @@ const computeBaselineScore = (place) => {
 };
 
 function getTimeBucket(slotStart) {
-  const date = new Date(slotStart);
-  if (Number.isNaN(date.getTime())) {
+  const slotDate = new Date(slotStart);
+  if (Number.isNaN(slotDate.getTime())) {
     return 'AFTERNOON';
   }
 
-  const hour = date.getHours();
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const slotKST = new Date(slotDate.getTime() + KST_OFFSET);
+  const hour = slotKST.getUTCHours();
   if (hour >= 6 && hour <= 10) return 'MORNING';
   if (hour >= 11 && hour <= 16) return 'AFTERNOON';
   if (hour >= 17 && hour <= 20) return 'EVENING';
@@ -2227,9 +2229,16 @@ const runRecommendationPipeline = async ({
     slotEnd,
   });
 
-  const slotStartDate = new Date(slotStart);
-  const slotHour = slotStartDate.getHours();
-  const slotDay = slotStartDate.getDay();
+  const slotDate = new Date(slotStart);
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const slotKST = new Date(slotDate.getTime() + KST_OFFSET);
+  const slotHour = slotKST.getUTCHours();
+  const slotDay = slotKST.getUTCDay();
+  console.log('[slot-time-debug]', {
+    utcHour: slotDate.getUTCHours(),
+    kstHour: slotHour,
+    kstDay: slotDay,
+  });
   const placesWithSlotOpenNow = placesWithKeywords.map((place) => ({
     ...place,
     openNow: isOpenDuringSlot(place, slotDay, slotHour),
