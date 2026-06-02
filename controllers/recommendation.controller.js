@@ -47,8 +47,8 @@ exports.recommendForSlot = async (req, res, next) => {
     console.log('API HIT: recommendForSlot');
     const uid = req.user.uid;
     console.log('[recommendation][auth-uid]', req.user?.uid);
-    console.log('[demo-slot] body keys:', Object.keys(body));
-    console.log('[demo-slot] body:', JSON.stringify(body));
+    console.log('[demo-slot] body keys:', Object.keys(req.body));
+    console.log('[demo-slot] body:', JSON.stringify(req.body));
 
     const {
       slotStart,
